@@ -1,24 +1,20 @@
-
 #ifndef CUBICRUBIK_SUBCUBE_H
 #define CUBICRUBIK_SUBCUBE_H
 
-#include "colors.h"
+#include <SFML/Graphics/Color.hpp>
 
 class subcube
 {
-private:
-    colors m_colors[6];
-    double m_size;
 public:
-    subcube();
-
     void draw();
 
     void draw(double x, double y, double z);
 
-    void setColor(int index, colors color);
+    void drawInCenter();
 
-    void setSize(int size);
+    void setColor(int index, sf::Color const& color);
+
+    void setSize(double size);
 
     void rotateX();
 
@@ -26,6 +22,13 @@ public:
 
     void rotateZ();
 
+private:
+    sf::Color m_colors[6]{};
+    double m_size{0};
+
+private:
+    unsigned char _color[3]{};
+    unsigned char* at(int i);
 };
 
 #endif
