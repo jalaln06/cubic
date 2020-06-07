@@ -1,66 +1,104 @@
+#include <iostream>
+#include <SFML/Window.hpp>
+#include <SFML/OpenGL.hpp>
+#include "cube.hpp"
 
-#include "SFML/Window.hpp"
-#include "SFML/OpenGL.hpp"
-#include "subcube.h"
-void perspectiveGL( GLdouble fovY, GLdouble aspect, GLdouble zNear, GLdouble zFar )
+int main()
 {
-    const GLdouble pi = 3.1415926535897932384626433832795;
-    GLdouble fW, fH;
+    sf::ContextSettings settings;
+    settings.depthBits = 24; // Request m_subcubes 24 bits depth buffer
+    settings.stencilBits = 8;  // Request m_subcubes 8 bits stencil buffer
+    settings.antialiasingLevel = 2;  // Request 2 levels of antialiasing
+    sf::Window window(sf::VideoMode(800, 600, 32),
+            "SFML OpenGL", sf::Style::Close, settings);
+    window.setVerticalSyncEnabled(true);
+    window.setActive(true);
 
-    //fH = tan( (fovY / 2) / 180 * pi ) * zNear;
-    fH = tan( fovY / 360 * pi ) * zNear;
-    fW = fH * aspect;
-
-    glFrustum( -fW, fW, -fH, fH, zNear, zFar );
-}
-int main(){
-
-    sf::Window App(sf::VideoMode(800, 600, 32), "SFML OpenGL");
-
-    // Create a clock for measuring time elapsed
+    // Create m_subcubes clock for measuring time elapsed
     sf::Clock Clock;
 
-    //prepare OpenGL surface for HSR
-    glClearDepth(1.f);
-    glClearColor(0.3f, 0.3f, 0.3f, 0.f);
-    glEnable(GL_DEPTH_TEST);
-    glDepthMask(GL_TRUE);
-
-    //// Setup a perspective projection & Camera position
-    glMatrixMode(GL_PROJECTION);
+    glShadeModel(GL_SMOOTH);                            // Enable Smooth Shading
+    glClearColor(0.0f, 0.0f, 0.0f, 0.5f);               // Black Background
+    glClearDepth(1.0f);                                 // Depth Buffer Setup
+    glEnable(GL_DEPTH_TEST);                            // Enables Depth Testing
+    glDepthFunc(GL_LEQUAL);                             // The Type Of Depth Testing To Do
+//    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+//    glEnable(GL_CULL_FACE);
+//
+    glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    perspectiveGL(90.f, 1.f, 1.f, 300.0f);//fov, aspect, zNear, zFar
 
+    Cube<3> c(0.8, {
+            sf::Color::Red, sf::Color::Blue, sf::Color::Yellow,
+            sf::Color::Green, sf::Color::White, sf::Color::Magenta
+    });
 
+    glRotatef(-90.f, 0.f, 1.f, 0.f);
+    glRotatef(90.f, 1.f, 0.f, 0.f);
 
-    bool rotate=true;
-    float angle;
-    subcube test;
-    test.setSize(50);
-    test.setColor(0, colors::Red);
-    test.setColor(1, colors::Magenta);
-    test.setColor(2, colors::White);
-    test.setColor(3, colors::Green);
-    test.setColor(4, colors::Blue);
-    test.setColor(5, colors::Orange);
+    glRotatef(-45.f, 0.f, 0.f, 1.f);
+    glRotatef(30.f, 0.f, 1.f, 1.f);
+
     // Start game loop
-
-    while (App.isOpen())
+    bool running = true;
+    while (running)
     {
         // Process events
-        sf::Event Event;
-        while (App.pollEvent(Event))
+        sf::Event event{};
+        while (window.pollEvent(event))
         {
             // Close window : exit
-            if (Event.type == sf::Event::Closed)
-                App.close();
-
-            // Escape key : exit
-            if ((Event.type == sf::Event::KeyPressed) && (Event.key.code == sf::Keyboard::Escape))
-                App.close();
-
-            if ((Event.type == sf::Event::KeyPressed) && (Event.key.code == sf::Keyboard::A)){
-                rotate=!rotate;
+            if (event.type == sf::Event::Closed ||
+                event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
+            {
+                running = false;
+            }
+            else if (event.type == sf::Event::KeyPressed)
+            {
+                switch(event.key.code)
+                {
+                    case sf::Keyboard::Num1:
+                        glRotatef(1.f, 0.f, 0.f, 1.f);
+                        break;
+                    case sf::Keyboard::L:
+                        c.rotate90(2, 1);
+                        break;
+                    case sf::Keyboard::O:
+                        c.rotate90(2, -1);
+                        break;
+                    case sf::Keyboard::R:
+                        c.rotate90(3, 1);
+                        break;
+                    case sf::Keyboard::T:
+                        c.rotate90(3, -1);
+                        break;
+                    case sf::Keyboard::U:
+                        c.rotate90(0, 1);
+                        break;
+                    case sf::Keyboard::I:
+                        c.rotate90(0, -1);
+                        break;
+                    case sf::Keyboard::D:
+                        c.rotate90(1, 1);
+                        break;
+                    case sf::Keyboard::S:
+                        c.rotate90(1, -1);
+                        break;
+                    case sf::Keyboard::F:
+                        c.rotate90(4, 1);
+                        break;
+                    case sf::Keyboard::V:
+                        c.rotate90(4, -1);
+                        break;
+                    case sf::Keyboard::B:
+                        c.rotate90(5, 1);
+                        break;
+                    case sf::Keyboard::N:
+                        c.rotate90(5, -1);
+                        break;
+                    default:
+                        std::cout << "Unsupported key" << std::endl;
+                }
             }
 
         }
@@ -69,21 +107,10 @@ int main(){
         // Clear color and depth buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Apply some transformations for the cube
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glTranslatef(0.f, 0.f, -200.f);
-
-        if(rotate){
-            angle=Clock.getElapsedTime().asSeconds();
-        }
-        glRotatef(angle * 50, 1.f, 0.f, 0.f);
-//        glRotatef(angle * 30, 0.f, 1.f, 0.f);
-//        glRotatef(angle * 90, 0.f, 0.f, 1.f);
-        test.draw();
+        c.draw();
 
         // Finally, display rendered frame on screen
-        App.display();
+        window.display();
     }
 
     return EXIT_SUCCESS;
